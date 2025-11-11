@@ -333,5 +333,23 @@ services:
       airflow-init:
         condition: service_completed_successfully
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: trend-flow-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
 volumes:
   postgres-db-volume:
+  ollama-data:
