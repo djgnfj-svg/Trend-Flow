@@ -1,0 +1,50 @@
+# Airflow
+logs/
+airflow.db
+airflow.cfg
+unittests.cfg
+webserver_config.py
+standalone_admin_password.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Docker
+.env
+.env.*
+!.env.example
+
+# Secrets & Credentials
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.yaml
+config/airflow.cfg
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Airflow specific security
+airflow-webserver.pid
+airflow-scheduler.pid
