@@ -4,32 +4,30 @@
 import psycopg2
 from psycopg2.extras import Json, RealDictCursor
 from typing import List, Dict, Optional
-from datetime import datetime
-import json
+import logging
+import sys
+from pathlib import Path
+
+# 설정 파일 임포트
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from config import DATABASE_CONFIG
+
+# 로거 설정
+logger = logging.getLogger(__name__)
 
 
 class DatabaseManager:
     """PostgreSQL 데이터베이스 관리 클래스"""
 
-    def __init__(self, host='postgres', port=5432, database='airflow',
-                 user='airflow', password='airflow'):
+    def __init__(self, **kwargs):
         """
         데이터베이스 연결 초기화
 
         Args:
-            host: 데이터베이스 호스트
-            port: 포트 번호
-            database: 데이터베이스 이름
-            user: 사용자명
-            password: 비밀번호
+            **kwargs: 데이터베이스 연결 파라미터 (선택사항)
+                     제공되지 않으면 config.py의 DATABASE_CONFIG 사용
         """
-        self.connection_params = {
-            'host': host,
-            'port': port,
-            'database': database,
-            'user': user,
-            'password': password
-        }
+        self.connection_params = {**DATABASE_CONFIG, **kwargs}
 
     def get_connection(self):
         """데이터베이스 연결 생성"""
@@ -86,18 +84,18 @@ class DatabaseManager:
                         result = cur.fetchone()
                         if result:
                             saved_count += 1
-                            print(f"✅ 저장: {trend['title']}")
+                            logger.info(f"저장됨: {trend['title']}")
                         else:
                             skipped_count += 1
-                            print(f"⏭️  중복 스킵: {trend['title']}")
+                            logger.debug(f"중복 스킵: {trend['title']}")
 
                     except Exception as e:
-                        print(f"⚠️  저장 실패 ({trend.get('title')}): {str(e)}")
+                        logger.warning(f"저장 실패 ({trend.get('title')}): {str(e)}")
                         continue
 
                 conn.commit()
 
-        print(f"\n📊 저장 완료: {saved_count}개 저장, {skipped_count}개 스킵")
+        logger.info(f"저장 완료: {saved_count}개 저장, {skipped_count}개 스킵")
         return saved_count
 
     def get_unanalyzed_trends(self, limit: int = 10) -> List[Dict]:
@@ -206,7 +204,7 @@ class DatabaseManager:
                         saved_count += 1
 
                     except Exception as e:
-                        print(f"⚠️  솔루션 저장 실패: {str(e)}")
+                        logger.warning(f"솔루션 저장 실패: {str(e)}")
                         continue
 
                 conn.commit()
@@ -235,19 +233,22 @@ class DatabaseManager:
 
 if __name__ == "__main__":
     # 테스트
+    logging.basicConfig(level=logging.INFO,
+                       format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
     db = DatabaseManager()
 
-    print("=" * 60)
-    print("데이터베이스 연결 테스트")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("데이터베이스 연결 테스트")
+    logger.info("=" * 60)
 
     # 소스 ID 조회
     source_id = db.get_source_id('github_trending')
-    print(f"✅ github_trending source_id: {source_id}")
+    logger.info(f"github_trending source_id: {source_id}")
 
     # 오늘의 통계
     stats = db.get_today_stats()
-    print(f"\n📊 오늘의 통계:")
-    print(f"  - 수집된 트렌드: {stats.get('total_trends', 0)}개")
-    print(f"  - 분석 완료: {stats.get('analyzed_trends', 0)}개")
-    print(f"  - 생성된 솔루션: {stats.get('total_solutions', 0)}개")
+    logger.info("오늘의 통계:")
+    logger.info(f"  - 수집된 트렌드: {stats.get('total_trends', 0)}개")
+    logger.info(f"  - 분석 완료: {stats.get('analyzed_trends', 0)}개")
+    logger.info(f"  - 생성된 솔루션: {stats.get('total_solutions', 0)}개")
