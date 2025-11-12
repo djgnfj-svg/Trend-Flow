@@ -98,29 +98,43 @@ class DatabaseManager:
         logger.info(f"저장 완료: {saved_count}개 저장, {skipped_count}개 스킵")
         return saved_count
 
-    def get_unanalyzed_trends(self, limit: int = 10) -> List[Dict]:
+    def get_unanalyzed_trends(self, limit: int = 10, source_name: Optional[str] = None) -> List[Dict]:
         """
         아직 분석되지 않은 트렌드 가져오기
 
         Args:
             limit: 가져올 최대 개수
+            source_name: 특정 소스만 필터링 (선택사항)
 
         Returns:
             분석되지 않은 트렌드 리스트
         """
         with self.get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute("""
-                    SELECT t.id, t.title, t.description, t.url,
-                           t.category, t.rank, t.metadata,
-                           s.name as source_name
-                    FROM trends t
-                    JOIN sources s ON t.source_id = s.id
-                    LEFT JOIN analyzed_trends at ON t.id = at.trend_id
-                    WHERE at.id IS NULL
-                    ORDER BY t.collected_at DESC
-                    LIMIT %s
-                """, (limit,))
+                if source_name:
+                    cur.execute("""
+                        SELECT t.id, t.title, t.description, t.url,
+                               t.category, t.rank, t.metadata,
+                               s.name as source_name
+                        FROM trends t
+                        JOIN sources s ON t.source_id = s.id
+                        LEFT JOIN analyzed_trends at ON t.id = at.trend_id
+                        WHERE at.id IS NULL AND s.name = %s
+                        ORDER BY t.collected_at DESC
+                        LIMIT %s
+                    """, (source_name, limit))
+                else:
+                    cur.execute("""
+                        SELECT t.id, t.title, t.description, t.url,
+                               t.category, t.rank, t.metadata,
+                               s.name as source_name
+                        FROM trends t
+                        JOIN sources s ON t.source_id = s.id
+                        LEFT JOIN analyzed_trends at ON t.id = at.trend_id
+                        WHERE at.id IS NULL
+                        ORDER BY t.collected_at DESC
+                        LIMIT %s
+                    """, (limit,))
 
                 trends = cur.fetchall()
                 return [dict(trend) for trend in trends]
@@ -226,6 +240,26 @@ class DatabaseManager:
                     LEFT JOIN solutions sol ON at.id = sol.analyzed_trend_id
                     WHERE DATE(t.collected_at) = CURRENT_DATE
                 """)
+
+                stats = cur.fetchone()
+                return dict(stats) if stats else {}
+
+    def get_source_stats(self, source_name: str) -> Dict:
+        """특정 소스의 통계 조회"""
+        with self.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute("""
+                    SELECT
+                        COUNT(DISTINCT t.id) as total_trends,
+                        COUNT(DISTINCT at.id) as analyzed_trends,
+                        COUNT(DISTINCT sol.id) as total_solutions,
+                        AVG(at.importance_score) as avg_importance
+                    FROM trends t
+                    JOIN sources s ON t.source_id = s.id
+                    LEFT JOIN analyzed_trends at ON t.id = at.trend_id
+                    LEFT JOIN solutions sol ON at.id = sol.analyzed_trend_id
+                    WHERE s.name = %s
+                """, (source_name,))
 
                 stats = cur.fetchone()
                 return dict(stats) if stats else {}

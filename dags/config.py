@@ -24,6 +24,7 @@ OLLAMA_CONFIG: Dict[str, str] = {
 # 크롤링 설정
 CRAWLING_CONFIG: Dict[str, any] = {
     'github_trending_limit': int(os.getenv('GITHUB_LIMIT', '25')),
+    'producthunt_limit': int(os.getenv('PRODUCTHUNT_LIMIT', '20')),
     'analyze_limit': int(os.getenv('ANALYZE_LIMIT', '10')),
     'request_timeout': int(os.getenv('REQUEST_TIMEOUT', '30')),
     'user_agent': os.getenv('USER_AGENT', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'),

@@ -350,6 +350,27 @@ services:
       retries: 3
       start_period: 30s
 
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: trend-flow-backend
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://airflow:airflow@postgres:5432/airflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
 volumes:
   postgres-db-volume:
   ollama-data:
