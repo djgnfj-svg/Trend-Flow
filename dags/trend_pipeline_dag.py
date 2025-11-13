@@ -61,9 +61,8 @@ def analyze_trends(**context):
         db = DatabaseManager()
         analyzer = TrendAnalyzer()
 
-        # 분석되지 않은 트렌드 가져오기
-        analyze_limit = CRAWLING_CONFIG['analyze_limit']
-        unanalyzed = db.get_unanalyzed_trends(limit=analyze_limit)
+        # 분석되지 않은 트렌드 전부 가져오기
+        unanalyzed = db.get_unanalyzed_trends()
 
         if not unanalyzed:
             logger.warning("분석할 트렌드가 없습니다.")

@@ -98,12 +98,12 @@ class DatabaseManager:
         logger.info(f"저장 완료: {saved_count}개 저장, {skipped_count}개 스킵")
         return saved_count
 
-    def get_unanalyzed_trends(self, limit: int = 10, source_name: Optional[str] = None) -> List[Dict]:
+    def get_unanalyzed_trends(self, limit: Optional[int] = None, source_name: Optional[str] = None) -> List[Dict]:
         """
         아직 분석되지 않은 트렌드 가져오기
 
         Args:
-            limit: 가져올 최대 개수
+            limit: 가져올 최대 개수 (None이면 전부)
             source_name: 특정 소스만 필터링 (선택사항)
 
         Returns:
@@ -112,7 +112,7 @@ class DatabaseManager:
         with self.get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 if source_name:
-                    cur.execute("""
+                    query = """
                         SELECT t.id, t.title, t.description, t.url,
                                t.category, t.rank, t.metadata,
                                s.name as source_name
@@ -121,10 +121,14 @@ class DatabaseManager:
                         LEFT JOIN analyzed_trends at ON t.id = at.trend_id
                         WHERE at.id IS NULL AND s.name = %s
                         ORDER BY t.collected_at DESC
-                        LIMIT %s
-                    """, (source_name, limit))
+                    """
+                    if limit:
+                        query += " LIMIT %s"
+                        cur.execute(query, (source_name, limit))
+                    else:
+                        cur.execute(query, (source_name,))
                 else:
-                    cur.execute("""
+                    query = """
                         SELECT t.id, t.title, t.description, t.url,
                                t.category, t.rank, t.metadata,
                                s.name as source_name
@@ -133,8 +137,12 @@ class DatabaseManager:
                         LEFT JOIN analyzed_trends at ON t.id = at.trend_id
                         WHERE at.id IS NULL
                         ORDER BY t.collected_at DESC
-                        LIMIT %s
-                    """, (limit,))
+                    """
+                    if limit:
+                        query += " LIMIT %s"
+                        cur.execute(query, (limit,))
+                    else:
+                        cur.execute(query)
 
                 trends = cur.fetchall()
                 return [dict(trend) for trend in trends]

@@ -61,9 +61,8 @@ def analyze_producthunt_trends(**context):
         db = DatabaseManager()
         analyzer = TrendAnalyzer()
 
-        # Product Hunt 소스의 분석되지 않은 트렌드 가져오기
-        analyze_limit = CRAWLING_CONFIG['analyze_limit']
-        unanalyzed = db.get_unanalyzed_trends(source_name='product_hunt', limit=analyze_limit)
+        # Product Hunt 소스의 분석되지 않은 트렌드 전부 가져오기
+        unanalyzed = db.get_unanalyzed_trends(source_name='product_hunt')
 
         if not unanalyzed:
             logger.warning("분석할 Product Hunt 트렌드가 없습니다.")
