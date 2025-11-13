@@ -18,7 +18,7 @@ DATABASE_CONFIG: Dict[str, any] = {
 # Ollama AI 설정
 OLLAMA_CONFIG: Dict[str, str] = {
     'host': os.getenv('OLLAMA_HOST', 'http://ollama:11434'),
-    'model': os.getenv('OLLAMA_MODEL', 'qwen2.5:7b'),
+    'model': os.getenv('OLLAMA_MODEL', 'llama3.1:8b'),
 }
 
 # 크롤링 설정

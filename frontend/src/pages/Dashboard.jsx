@@ -26,7 +26,7 @@ export default function Dashboard() {
 
       setStats(overviewData);
       setDailyStats(dailyData);
-      setLatestTrends(trendsData);
+      setLatestTrends(trendsData.trends);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
     } finally {

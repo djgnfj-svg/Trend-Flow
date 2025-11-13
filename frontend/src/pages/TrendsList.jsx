@@ -8,20 +8,25 @@ export default function TrendsList() {
   const [page, setPage] = useState(1);
   const [perPage] = useState(10);
   const [analyzedOnly, setAnalyzedOnly] = useState(false);
+  const [sourceFilter, setSourceFilter] = useState(null); // null = all, 'github_trending', 'product_hunt'
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadTrends();
-  }, [page, analyzedOnly]);
+  }, [page, analyzedOnly, sourceFilter]);
 
   const loadTrends = async () => {
     try {
       setLoading(true);
-      const data = await api.getTrends({
+      const params = {
         page,
         per_page: perPage,
         analyzed_only: analyzedOnly,
-      });
+      };
+      if (sourceFilter) {
+        params.source = sourceFilter;
+      }
+      const data = await api.getTrends(params);
       setTrends(data.trends);
       setTotal(data.total);
     } catch (error) {
@@ -40,22 +45,69 @@ export default function TrendsList() {
           <h1 className="text-4xl font-bold text-gray-800 mb-4">트렌드 목록</h1>
 
           {/* Filter */}
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={analyzedOnly}
-                onChange={(e) => {
-                  setAnalyzedOnly(e.target.checked);
+          <div className="space-y-4">
+            {/* Source Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-gray-700 font-medium mr-2">소스:</span>
+              <button
+                onClick={() => {
+                  setSourceFilter(null);
                   setPage(1);
                 }}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <span className="text-gray-700">분석 완료된 항목만 보기</span>
-            </label>
-            <span className="text-gray-500 text-sm ml-auto">
-              총 {total}개의 트렌드
-            </span>
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  sourceFilter === null
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                }`}
+              >
+                전체
+              </button>
+              <button
+                onClick={() => {
+                  setSourceFilter('github_trending');
+                  setPage(1);
+                }}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  sourceFilter === 'github_trending'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                }`}
+              >
+                GitHub
+              </button>
+              <button
+                onClick={() => {
+                  setSourceFilter('product_hunt');
+                  setPage(1);
+                }}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  sourceFilter === 'product_hunt'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                }`}
+              >
+                Product Hunt
+              </button>
+            </div>
+
+            {/* Analysis Filter */}
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={analyzedOnly}
+                  onChange={(e) => {
+                    setAnalyzedOnly(e.target.checked);
+                    setPage(1);
+                  }}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-gray-700">분석 완료된 항목만 보기</span>
+              </label>
+              <span className="text-gray-500 text-sm ml-auto">
+                총 {total}개의 트렌드
+              </span>
+            </div>
           </div>
         </div>
 

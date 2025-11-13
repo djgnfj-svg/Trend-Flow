@@ -134,7 +134,9 @@ class TrendAnalyzer:
 
     def _create_analysis_prompt(self, trend: Dict) -> str:
         """트렌드 분석용 프롬프트 생성"""
-        return f"""다음 트렌드를 분석하고 JSON 형식으로만 답변해주세요:
+        return f"""**IMPORTANT: You MUST respond in Korean language only. 반드시 한국어로만 응답하세요.**
+
+다음 트렌드를 분석하고 JSON 형식으로만 답변해주세요:
 
 제목: {trend.get('title', 'N/A')}
 설명: {trend.get('description', 'N/A')}
@@ -142,23 +144,32 @@ class TrendAnalyzer:
 URL: {trend.get('url', 'N/A')}
 메타데이터: {json.dumps(trend.get('metadata', {}), ensure_ascii=False)}
 
-다음 형식의 JSON만 응답하세요 (다른 설명 없이):
+다음 형식의 JSON만 응답하세요 (다른 설명 없이, 모든 텍스트는 한국어로):
 {{
-  "summary": "트렌드의 핵심 내용을 1-2문장으로 요약",
+  "summary": "트렌드의 핵심 내용을 1-2문장으로 요약 (한국어)",
   "category": "기술/비즈니스/사회/문화/경제 중 하나",
   "keywords": ["키워드1", "키워드2", "키워드3"],
   "problems": ["이 트렌드가 해결하려는 문제점1", "문제점2"],
-  "importance_score": 8,
+  "importance_score": 1-10 사이의 숫자 (1=매우 낮음, 5=보통, 10=매우 중요),
   "sentiment": "positive/neutral/negative"
 }}
 
+**중요도 평가 기준 (importance_score):**
+- 10: 혁신적이고 산업 전반에 큰 영향을 줄 것으로 예상
+- 7-9: 주목할 만한 가치가 있고 특정 분야에 중요한 영향
+- 4-6: 관심을 가질 만하나 영향력이 제한적
+- 1-3: 일시적이거나 영향력이 미미함
+
+**다시 강조: 모든 응답은 반드시 한국어로 작성해야 합니다. 중국어나 다른 언어는 사용하지 마세요.**
 위 형식의 JSON만 응답하세요."""
 
     def _create_solution_prompt(self, trend: Dict, analysis: Dict) -> str:
         """솔루션 생성용 프롬프트 생성"""
         problems_text = "\n".join([f"- {p}" for p in analysis.get('problems', [])])
 
-        return f"""다음 트렌드와 분석된 문제점을 기반으로 실현 가능한 솔루션 아이디어 2-3개를 JSON 형식으로 제안해주세요:
+        return f"""**IMPORTANT: You MUST respond in Korean language only. 반드시 한국어로만 응답하세요.**
+
+다음 트렌드와 분석된 문제점을 기반으로 실현 가능한 솔루션 아이디어 2-3개를 JSON 형식으로 제안해주세요:
 
 트렌드: {trend.get('title')}
 요약: {analysis.get('summary')}
@@ -166,20 +177,21 @@ URL: {trend.get('url', 'N/A')}
 문제점들:
 {problems_text}
 
-다음 형식의 JSON만 응답하세요 (다른 설명 없이):
+다음 형식의 JSON만 응답하세요 (다른 설명 없이, 모든 텍스트는 한국어로):
 {{
   "solutions": [
     {{
-      "title": "솔루션 제목",
-      "description": "솔루션에 대한 구체적인 설명 (2-3문장)",
+      "title": "솔루션 제목 (한국어)",
+      "description": "솔루션에 대한 구체적인 설명 (2-3문장, 한국어)",
       "feasibility": "high/medium/low",
       "estimated_effort": "1주/1개월/3개월/6개월",
-      "target_audience": "타겟 사용자층",
+      "target_audience": "타겟 사용자층 (한국어)",
       "tech_stack": ["기술1", "기술2", "기술3"]
     }}
   ]
 }}
 
+**다시 강조: 모든 응답은 반드시 한국어로 작성해야 합니다. 중국어나 다른 언어는 사용하지 마세요.**
 위 형식의 JSON만 응답하세요."""
 
     def _parse_json_response(self, response: str) -> Optional[Dict]:

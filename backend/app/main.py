@@ -15,8 +15,8 @@ app = FastAPI(
 # CORS 설정 (React 프론트엔드에서 접근 가능하도록)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:3001"],  # React/Vite dev server
-    allow_credentials=True,
+    allow_origins=["*"],  # 개발 환경에서 모든 origin 허용
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

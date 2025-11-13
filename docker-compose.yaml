@@ -371,6 +371,20 @@ services:
       retries: 3
       start_period: 10s
 
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: trend-flow-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+    depends_on:
+      - backend
+    restart: unless-stopped
+
 volumes:
   postgres-db-volume:
   ollama-data:
