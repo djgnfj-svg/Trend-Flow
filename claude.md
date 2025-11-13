@@ -95,3 +95,134 @@ docker compose exec airflow-worker airflow dags test <dag_id> <date>
 ---
 
 **중요**: 설정 전 반드시 공식 문서를 확인하여 최신 정보를 참고하세요.
+
+---
+
+# 프로젝트 현재 상태 및 구현 단계
+
+## 전체 구현 단계
+
+### 1단계: 데이터 가져오기 (매일)
+- [ ] GitHub Search API로 트렌드 수집 (구현 필요)
+- [ ] Product Hunt API로 트렌드 수집 (코드 작성됨, 검증 필요)
+
+**필요한 API 키:**
+- GITHUB_TOKEN (https://github.com/settings/tokens)
+- PRODUCTHUNT_API_KEY (https://api.producthunt.com/v2/oauth/applications)
+
+**검증 방법:**
+```bash
+# .env 파일에 API 키 추가
+echo "GITHUB_TOKEN=your_token" >> .env
+echo "PRODUCTHUNT_API_KEY=your_key" >> .env
+
+# Docker 재시작
+docker compose down && docker compose up -d
+
+# Airflow DAG 테스트 실행
+docker compose exec airflow-worker airflow dags test github_collection_and_analysis 2025-11-12
+docker compose exec airflow-worker airflow dags test producthunt_collection_and_analysis 2025-11-12
+```
+
+**확인 사항:**
+- 실제 API에서 데이터를 가져오는가?
+- 에러 없이 완료되는가?
+- 더미 데이터가 아닌가?
+
+---
+
+### 2단계: 데이터 DB에 넣기
+- [ ] `trends` 테이블에 정상 저장 확인
+
+**검증 방법:**
+```bash
+# DB 접속 후 데이터 확인
+docker compose exec postgres psql -U airflow -d airflow
+
+# 쿼리 실행
+SELECT COUNT(*) FROM trends;
+SELECT source_id, title, collected_at FROM trends ORDER BY collected_at DESC LIMIT 10;
+```
+
+**확인 사항:**
+- 트렌드 데이터가 저장되는가?
+- 중복 데이터가 없는가?
+- source_id가 올바른가?
+
+---
+
+### 3단계: AI로 요약 + 요약 데이터 DB에 넣기
+
+#### 매일 분석
+- [ ] `analyzed_trends` 테이블에 분석 결과 저장 확인
+- [ ] `solutions` 테이블에 솔루션 저장 확인
+
+**검증 방법:**
+```bash
+# DB에서 분석 결과 확인
+docker compose exec postgres psql -U airflow -d airflow
+
+# 쿼리 실행
+SELECT COUNT(*) FROM analyzed_trends;
+SELECT COUNT(*) FROM solutions;
+SELECT * FROM analyzed_trends ORDER BY analyzed_at DESC LIMIT 3;
+```
+
+**확인 사항:**
+- Ollama AI가 실제로 분석을 수행하는가?
+- 분석 결과가 의미있는가? (더미가 아닌가?)
+- problems, keywords 필드가 채워지는가?
+
+---
+
+### 4단계: 프론트로 보여주기
+- [ ] 트렌드 목록 페이지 동작 확인
+- [ ] 분석 결과 표시 확인
+
+**검증 방법:**
+```bash
+# Frontend/Backend 실행
+npm run dev  # frontend 디렉토리에서
+# Backend는 docker compose로 실행중
+
+# 브라우저에서 확인
+http://localhost:5173
+```
+
+**확인 사항:**
+- API에서 데이터를 가져오는가?
+- 화면에 제대로 표시되는가?
+- 에러가 없는가?
+
+---
+
+## 현재 TASK 목록 (일단위 검증)
+
+```
+TASK 0: API 키 발급 및 설정
+  └ GitHub Token 발급
+  └ Product Hunt API Key 발급
+  └ .env 파일에 추가
+
+TASK 1: GitHub Search API로 수집기 구현
+  └ 기존 크롤링 → GitHub Search API로 변경
+  └ 최근 일주일간 스타 많이 받은 레포 검색
+  └ DAG 실행 및 검증
+
+TASK 2: Product Hunt 수집 검증
+  └ DAG 실행해서 실제 데이터 수집되는지 확인
+  └ DB에 저장되는지 확인
+
+TASK 3: AI 분석 검증
+  └ Ollama가 제대로 분석하는지 확인
+  └ analyzed_trends, solutions 테이블 데이터 확인
+
+TASK 4: 프론트엔드 동작 확인
+  └ 브라우저에서 데이터가 보이는지 확인
+  └ API 연결 확인
+```
+
+---
+
+## 다음 단계
+TASK 0부터 순서대로 진행

@@ -1,2 +1,24 @@
-간단한 트랜드를 정리해주는 프로젝트 입니다.
-airflow랑 기타등등을 추가해서 아침마다 정리된 아이디어를 보고 1주단위로 프로젝트를 런칭하고 싶어서 만들었습니다.
+# Trend-Flow
+
+매일 자동으로 트렌드를 수집하고 AI가 분석해서 아이디어를 만들어주는 프로젝트
+
+## 빠른 시작
+
+```bash
+# 1. API 키 설정
+echo "GITHUB_TOKEN=your_github_token" >> .env
+echo "PRODUCTHUNT_API_KEY=your_producthunt_key" >> .env
+
+# 2. Docker 실행
+docker compose down && docker compose up -d
+
+# 3. 접속
+# Airflow: http://localhost:8080 (airflow/airflow)
+# Frontend: http://localhost:5173
+```
+
+## 기술 스택
+Apache Airflow · Ollama AI · PostgreSQL · React · FastAPI
+
+## 자세한 내용
+**[PROJECT_PLAN.md](./PROJECT_PLAN.md)** 참고
