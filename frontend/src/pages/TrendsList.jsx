@@ -88,6 +88,19 @@ export default function TrendsList() {
               >
                 Product Hunt
               </button>
+              <button
+                onClick={() => {
+                  setSourceFilter('reddit');
+                  setPage(1);
+                }}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  sourceFilter === 'reddit'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                }`}
+              >
+                Reddit
+              </button>
             </div>
 
             {/* Analysis Filter */}
