@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { painPointsApi, ideasApi } from '../services/painPointApi';
+import {
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 
 export default function PainPointsDashboard() {
   const [stats, setStats] = useState(null);
@@ -119,20 +123,67 @@ export default function PainPointsDashboard() {
           </div>
         </div>
 
-        {/* Severity Distribution */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-lg font-semibold mb-4">Pain Point Severity Distribution</h2>
-          <div className="flex gap-4">
-            {['critical', 'high', 'medium', 'low'].map((severity) => (
-              <div key={severity} className="flex-1">
-                <div className={`${severityColors[severity]} rounded-lg p-4 text-center`}>
-                  <div className="text-2xl font-bold">
-                    {stats?.painPoints?.[`${severity}_count`] || 0}
-                  </div>
-                  <div className="text-sm capitalize">{severity}</div>
-                </div>
-              </div>
-            ))}
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Severity Distribution Chart */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">Pain Point Severity Distribution</h2>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart
+                data={[
+                  { name: 'Critical', count: stats?.painPoints?.critical_count || 0, fill: '#ef4444' },
+                  { name: 'High', count: stats?.painPoints?.high_count || 0, fill: '#f97316' },
+                  { name: 'Medium', count: stats?.painPoints?.medium_count || 0, fill: '#eab308' },
+                  { name: 'Low', count: stats?.painPoints?.low_count || 0, fill: '#22c55e' },
+                ]}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+                  {[
+                    { name: 'Critical', count: stats?.painPoints?.critical_count || 0, fill: '#ef4444' },
+                    { name: 'High', count: stats?.painPoints?.high_count || 0, fill: '#f97316' },
+                    { name: 'Medium', count: stats?.painPoints?.medium_count || 0, fill: '#eab308' },
+                    { name: 'Low', count: stats?.painPoints?.low_count || 0, fill: '#22c55e' },
+                  ].map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Complexity Distribution Chart */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">Idea Complexity Distribution</h2>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'Simple', value: stats?.ideas?.simple_count || 0, fill: '#22c55e' },
+                    { name: 'Moderate', value: stats?.ideas?.moderate_count || 0, fill: '#eab308' },
+                    { name: 'Complex', value: stats?.ideas?.complex_count || 0, fill: '#ef4444' },
+                  ].filter(item => item.value > 0)}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value }) => `${name}: ${value}`}
+                  outerRadius={80}
+                  dataKey="value"
+                >
+                  {[
+                    { name: 'Simple', value: stats?.ideas?.simple_count || 0, fill: '#22c55e' },
+                    { name: 'Moderate', value: stats?.ideas?.moderate_count || 0, fill: '#eab308' },
+                    { name: 'Complex', value: stats?.ideas?.complex_count || 0, fill: '#ef4444' },
+                  ].map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -192,32 +243,6 @@ export default function PainPointsDashboard() {
           </div>
         </div>
 
-        {/* Complexity Distribution */}
-        {stats?.ideas && (
-          <div className="bg-white rounded-lg shadow p-6 mt-8">
-            <h2 className="text-lg font-semibold mb-4">Complexity Distribution</h2>
-            <div className="flex gap-4">
-              <div className="flex-1 bg-green-50 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {stats.ideas.simple_count}
-                </div>
-                <div className="text-sm text-gray-600">Simple</div>
-              </div>
-              <div className="flex-1 bg-yellow-50 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-yellow-600">
-                  {stats.ideas.moderate_count}
-                </div>
-                <div className="text-sm text-gray-600">Moderate</div>
-              </div>
-              <div className="flex-1 bg-red-50 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-red-600">
-                  {stats.ideas.complex_count}
-                </div>
-                <div className="text-sm text-gray-600">Complex</div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

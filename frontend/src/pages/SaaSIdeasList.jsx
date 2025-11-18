@@ -10,10 +10,43 @@ export default function SaaSIdeasList() {
     business_model: '',
     complexity: '',
   });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('overall_score'); // overall_score, validation_score, created_at
+  const [filteredAndSortedIdeas, setFilteredAndSortedIdeas] = useState([]);
 
   useEffect(() => {
     loadIdeas();
   }, [filters]);
+
+  // Filter and sort ideas client-side
+  useEffect(() => {
+    let result = [...ideas];
+
+    // Search filter
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      result = result.filter(
+        (idea) =>
+          idea.title?.toLowerCase().includes(search) ||
+          idea.description?.toLowerCase().includes(search) ||
+          idea.problem_statement?.toLowerCase().includes(search)
+      );
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      if (sortBy === 'overall_score') {
+        return (b.overall_score || 0) - (a.overall_score || 0);
+      } else if (sortBy === 'validation_score') {
+        return (b.validation_score || 0) - (a.validation_score || 0);
+      } else if (sortBy === 'created_at') {
+        return new Date(b.created_at) - new Date(a.created_at);
+      }
+      return 0;
+    });
+
+    setFilteredAndSortedIdeas(result);
+  }, [ideas, searchTerm, sortBy]);
 
   const loadIdeas = async () => {
     try {
@@ -67,8 +100,37 @@ export default function SaaSIdeasList() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filters */}
+        {/* Search and Sort */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search
+              </label>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by title, description, or problem..."
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Sort By
+              </label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+              >
+                <option value="overall_score">Overall Score (High to Low)</option>
+                <option value="validation_score">Validation Score (High to Low)</option>
+                <option value="created_at">Recently Added</option>
+              </select>
+            </div>
+          </div>
+
           <h2 className="text-lg font-semibold mb-4">Filters</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -127,13 +189,27 @@ export default function SaaSIdeasList() {
           <div className="text-center py-12">
             <div className="text-lg text-gray-600">Loading...</div>
           </div>
-        ) : ideas.length === 0 ? (
+        ) : filteredAndSortedIdeas.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-12 text-center">
-            <div className="text-gray-400 text-lg">No ideas found</div>
+            <div className="text-gray-400 text-lg">
+              {searchTerm ? `No ideas found matching "${searchTerm}"` : 'No ideas found'}
+            </div>
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Clear Search
+              </button>
+            )}
           </div>
         ) : (
-          <div className="space-y-6">
-            {ideas.map((idea) => (
+          <div>
+            <div className="mb-4 text-sm text-gray-600">
+              Showing {filteredAndSortedIdeas.length} of {ideas.length} ideas
+            </div>
+            <div className="space-y-6">
+              {filteredAndSortedIdeas.map((idea) => (
               <Link
                 key={idea.id}
                 to={`/saas-ideas/${idea.id}`}
@@ -271,7 +347,8 @@ export default function SaaSIdeasList() {
                   </div>
                 </div>
               </Link>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
