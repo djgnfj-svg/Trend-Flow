@@ -7,30 +7,40 @@ lxml==5.1.0
 # 데이터 처리
 pandas==2.1.4
 
-# Airflow Providers - HTTP/API 요청
+# Airflow Providers
 apache-airflow-providers-http>=4.0.0
-
-# Airflow Providers - 데이터베이스 저장
 apache-airflow-providers-postgres>=5.0.0
-
-# Airflow Providers - 슬랙 알림 (선택사항)
-apache-airflow-providers-slack>=8.0.0
-
-# Airflow Providers - Docker (선택사항)
-apache-airflow-providers-docker>=3.0.0
 
 # 추가 유용한 라이브러리
 python-dotenv==1.0.0
 
-# Ollama (로컬 AI)
-ollama==0.3.0
+# ======================================
+# AI & RAG 시스템
+# ======================================
 
-# PostgreSQL ORM
+# Claude API (Anthropic)
+anthropic==0.39.0
+
+# OpenAI (Embedding용)
+openai==1.54.0
+
+# ChromaDB (Vector Database)
+chromadb==0.5.11
+
+# ======================================
+# 데이터 수집
+# ======================================
+
+# Reddit API
+praw==7.7.1
+
+# PostgreSQL with Vector support
 psycopg2-binary==2.9.9
 SQLAlchemy==2.0.23
+pgvector==0.3.4
 
-# GitHub API
-PyGithub==2.1.1
-
-# Google Trends
+# Google Trends (시장 검증용)
 pytrends==4.9.2
+
+# Web Search (경쟁사 분석용)
+googlesearch-python==1.2.5
