@@ -24,11 +24,13 @@ def get_saas_ideas(
     """SaaS 아이디어 목록 조회"""
     query = """
         SELECT si.*, pp.problem_statement, pp.severity, pp.affected_users,
-               s.name as source_name
+               s.name as source_name,
+               mv.validation_score, mv.market_status
         FROM saas_ideas si
         JOIN pain_points pp ON si.pain_point_id = pp.id
         JOIN raw_contents rc ON pp.content_id = rc.id
         JOIN sources s ON rc.source_id = s.id
+        LEFT JOIN market_validation mv ON si.id = mv.idea_id
         WHERE 1=1
     """
 
@@ -77,11 +79,15 @@ def get_idea_detail(idea_id: int, db: Session = Depends(get_db)):
                pp.affected_users, pp.severity, pp.frequency,
                pp.market_size, pp.existing_solutions,
                rc.title as original_title, rc.url as original_url,
-               s.name as source_name
+               s.name as source_name,
+               mv.search_volume_score, mv.trend_direction, mv.competitor_count,
+               mv.competitors, mv.saturation_score, mv.market_status,
+               mv.validation_score, mv.recommendation, mv.validated_at
         FROM saas_ideas si
         JOIN pain_points pp ON si.pain_point_id = pp.id
         JOIN raw_contents rc ON pp.content_id = rc.id
         JOIN sources s ON rc.source_id = s.id
+        LEFT JOIN market_validation mv ON si.id = mv.idea_id
         WHERE si.id = %s
     """
 

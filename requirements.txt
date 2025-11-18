@@ -41,3 +41,6 @@ pgvector==0.3.4
 
 # Google Trends (시장 검증용)
 pytrends==4.9.2
+
+# Web Search (경쟁사 분석용)
+googlesearch-python==1.2.5

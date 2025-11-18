@@ -209,7 +209,33 @@ export default function SaaSIdeasList() {
                           </span>
                         </div>
                       )}
+                      {idea.validation_score && (
+                        <div>
+                          <span className="text-gray-600">Validation:</span>
+                          <span className={`ml-2 font-semibold ${
+                            idea.validation_score >= 8 ? 'text-green-600' :
+                            idea.validation_score >= 6 ? 'text-blue-600' :
+                            idea.validation_score >= 4 ? 'text-yellow-600' : 'text-red-600'
+                          }`}>
+                            {idea.validation_score}/10
+                          </span>
+                        </div>
+                      )}
                     </div>
+
+                    {/* Market Status Badge */}
+                    {idea.market_status && (
+                      <div className="mb-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          idea.market_status === 'blue_ocean' ? 'bg-blue-100 text-blue-800' :
+                          idea.market_status === 'growing' ? 'bg-green-100 text-green-800' :
+                          idea.market_status === 'competitive' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {idea.market_status.replace('_', ' ').toUpperCase()}
+                        </span>
+                      </div>
+                    )}
 
                     {/* MVP Features */}
                     {idea.mvp_features && idea.mvp_features.length > 0 && (

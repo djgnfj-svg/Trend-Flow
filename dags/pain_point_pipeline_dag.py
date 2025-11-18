@@ -20,6 +20,7 @@ from collectors.producthunt import scrape_producthunt
 from database.pain_point_db_manager import PainPointDBManager
 from ai_analysis.rag_engine import RAGEngine
 from ai_analysis.claude_analyzer import ClaudeAnalyzer
+from ai_analysis.market_validator import MarketValidator
 from config import CRAWLING_CONFIG
 
 # 로거 설정
@@ -318,6 +319,98 @@ def generate_ideas_task(**context):
         raise
 
 
+def validate_market_task(**context):
+    """시장 검증 태스크 (Google Trends + 경쟁사 분석)"""
+    logger.info("=" * 60)
+    logger.info("시장 검증 시작")
+    logger.info("=" * 60)
+
+    try:
+        db = PainPointDBManager()
+        validator = MarketValidator()
+
+        # 미검증 아이디어 가져오기
+        with db.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT si.id, si.title, si.problem_statement, si.keywords,
+                           si.target_audience, si.overall_score
+                    FROM saas_ideas si
+                    LEFT JOIN market_validation mv ON si.id = mv.idea_id
+                    WHERE mv.id IS NULL
+                    ORDER BY si.created_at DESC
+                    LIMIT 5
+                """)
+
+                ideas = cur.fetchall()
+
+        if not ideas:
+            logger.warning("검증할 아이디어가 없습니다.")
+            context['task_instance'].xcom_push(key='validated_count', value=0)
+            return
+
+        logger.info(f"시장 검증 대상: {len(ideas)}개 아이디어")
+
+        validated_count = 0
+
+        for idea in ideas:
+            idea_id, title, problem_statement, keywords, target_audience, overall_score = idea
+
+            logger.info(f"\n검증 중: {title}")
+
+            # 아이디어 데이터 구성
+            idea_data = {
+                'title': title,
+                'problem_statement': problem_statement,
+                'keywords': keywords or [],
+                'target_audience': target_audience
+            }
+
+            # 시장 검증 수행
+            validation_result = validator.validate_idea(idea_data)
+
+            # DB에 저장
+            with db.get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO market_validation (
+                            idea_id, search_volume_score, trend_direction,
+                            competitor_count, competitors, saturation_score,
+                            market_status, validation_score, recommendation,
+                            validated_at
+                        ) VALUES (
+                            %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW()
+                        )
+                    """, (
+                        idea_id,
+                        validation_result['search_volume_score'],
+                        validation_result['trend_direction'],
+                        validation_result['competitor_count'],
+                        validation_result['competitors'],
+                        validation_result['saturation_score'],
+                        validation_result['market_status'],
+                        validation_result['validation_score'],
+                        validation_result['recommendation']
+                    ))
+                    conn.commit()
+
+            validated_count += 1
+            logger.info(f"  ✓ 검증 점수: {validation_result['validation_score']}/10")
+            logger.info(f"  ✓ 시장 상태: {validation_result['market_status']}")
+
+        logger.info("=" * 60)
+        logger.info(f"시장 검증 완료: {validated_count}개")
+        logger.info("=" * 60)
+
+        context['task_instance'].xcom_push(key='validated_count', value=validated_count)
+
+    except Exception as e:
+        logger.error(f"시장 검증 실패: {str(e)}")
+        # 시장 검증 실패해도 전체 파이프라인은 계속 진행
+        logger.warning("시장 검증 실패, 계속 진행")
+        context['task_instance'].xcom_push(key='validated_count', value=0)
+
+
 def print_summary_task(**context):
     """일일 요약 출력 태스크"""
     logger.info("=" * 60)
@@ -348,6 +441,7 @@ def print_summary_task(**context):
         ph = ti.xcom_pull(task_ids='collect_producthunt', key='producthunt_count') or 0
         analyzed = ti.xcom_pull(task_ids='analyze_pain_points', key='analyzed_count') or 0
         ideas = ti.xcom_pull(task_ids='generate_ideas', key='ideas_count') or 0
+        validated = ti.xcom_pull(task_ids='validate_market', key='validated_count') or 0
 
         logger.info("\n이번 실행 결과:")
         logger.info(f"  - Reddit: {reddit}개")
@@ -355,6 +449,7 @@ def print_summary_task(**context):
         logger.info(f"  - Product Hunt: {ph}개")
         logger.info(f"  - 분석: {analyzed}개")
         logger.info(f"  - 아이디어: {ideas}개")
+        logger.info(f"  - 시장 검증: {validated}개")
 
         # Top 아이디어
         top_ideas = db.get_top_ideas(limit=3)
@@ -424,12 +519,18 @@ with DAG(
         python_callable=generate_ideas_task,
     )
 
-    # Task 6: 일일 요약 출력
+    # Task 6: 시장 검증 (Google Trends + 경쟁사 분석)
+    validation_task = PythonOperator(
+        task_id='validate_market',
+        python_callable=validate_market_task,
+    )
+
+    # Task 7: 일일 요약 출력
     summary_task = PythonOperator(
         task_id='print_summary',
         python_callable=print_summary_task,
     )
 
     # Task 의존성 정의
-    # 모든 수집 태스크를 병렬로 실행 → 분석 → 아이디어 생성 → 요약
-    [reddit_task, indie_task, ph_task] >> analyze_task >> ideas_task >> summary_task
+    # 모든 수집 태스크를 병렬로 실행 → 분석 → 아이디어 생성 → 시장 검증 → 요약
+    [reddit_task, indie_task, ph_task] >> analyze_task >> ideas_task >> validation_task >> summary_task

@@ -233,6 +233,105 @@ export default function IdeaDetail() {
           </div>
         )}
 
+        {/* Market Validation */}
+        {idea.validation_score && (
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg shadow-lg p-6 mb-6 border border-indigo-200">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-gray-900">Market Validation</h2>
+              <div className="text-center">
+                <div className={`text-5xl font-bold ${
+                  idea.validation_score >= 8 ? 'text-green-600' :
+                  idea.validation_score >= 6 ? 'text-blue-600' :
+                  idea.validation_score >= 4 ? 'text-yellow-600' : 'text-red-600'
+                }`}>
+                  {idea.validation_score}
+                  <span className="text-2xl text-gray-500">/10</span>
+                </div>
+                <div className="text-sm text-gray-600 mt-1">Validation Score</div>
+              </div>
+            </div>
+
+            {/* Market Status Badge */}
+            <div className="mb-4">
+              <span className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${
+                idea.market_status === 'blue_ocean' ? 'bg-blue-100 text-blue-800' :
+                idea.market_status === 'growing' ? 'bg-green-100 text-green-800' :
+                idea.market_status === 'competitive' ? 'bg-yellow-100 text-yellow-800' :
+                'bg-red-100 text-red-800'
+              }`}>
+                {idea.market_status?.replace('_', ' ').toUpperCase() || 'UNKNOWN'}
+              </span>
+            </div>
+
+            {/* Validation Metrics Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="bg-white rounded-lg p-4">
+                <div className="text-sm text-gray-600">Search Volume</div>
+                <div className="text-2xl font-bold text-indigo-600">
+                  {idea.search_volume_score || 0}
+                  <span className="text-sm text-gray-500">/100</span>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg p-4">
+                <div className="text-sm text-gray-600">Trend</div>
+                <div className="text-lg font-bold capitalize">
+                  <span className={
+                    idea.trend_direction === 'rising' ? 'text-green-600' :
+                    idea.trend_direction === 'stable' ? 'text-blue-600' :
+                    'text-red-600'
+                  }>
+                    {idea.trend_direction || 'Unknown'}
+                  </span>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg p-4">
+                <div className="text-sm text-gray-600">Competitors</div>
+                <div className="text-2xl font-bold text-purple-600">
+                  {idea.competitor_count || 0}
+                </div>
+              </div>
+              <div className="bg-white rounded-lg p-4">
+                <div className="text-sm text-gray-600">Saturation</div>
+                <div className="text-2xl font-bold text-orange-600">
+                  {idea.saturation_score || 0}
+                  <span className="text-sm text-gray-500">/100</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Recommendation */}
+            {idea.recommendation && (
+              <div className="bg-white rounded-lg p-4 border-l-4 border-indigo-500">
+                <div className="text-sm font-semibold text-gray-700 mb-1">Recommendation</div>
+                <p className="text-gray-800">{idea.recommendation}</p>
+              </div>
+            )}
+
+            {/* Competitors List */}
+            {idea.competitors && idea.competitors.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Competitors Found</h3>
+                <div className="flex flex-wrap gap-2">
+                  {idea.competitors.map((competitor, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 bg-white text-gray-700 rounded-lg text-sm border border-gray-300"
+                    >
+                      {competitor}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {idea.validated_at && (
+              <div className="mt-3 text-xs text-gray-500">
+                Validated: {new Date(idea.validated_at).toLocaleDateString()}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Go-to-Market */}
         {idea.go_to_market_strategy && (
           <div className="bg-white rounded-lg shadow p-6 mb-6">
