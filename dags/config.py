@@ -28,8 +28,16 @@ CRAWLING_CONFIG: Dict[str, any] = {
     'reddit_subreddits': os.getenv('REDDIT_SUBREDDITS', 'technology,programming,SideProject').split(','),
     'reddit_limit_per_subreddit': int(os.getenv('REDDIT_LIMIT_PER_SUBREDDIT', '10')),
     'analyze_limit': int(os.getenv('ANALYZE_LIMIT', '10')),
+    'indie_hackers_limit': int(os.getenv('INDIE_HACKERS_LIMIT', '20')),
     'request_timeout': int(os.getenv('REQUEST_TIMEOUT', '30')),
     'user_agent': os.getenv('USER_AGENT', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'),
+}
+
+# AI 분석 설정
+AI_CONFIG: Dict[str, any] = {
+    'use_multi_agent': os.getenv('USE_MULTI_AGENT', 'true').lower() == 'true',  # Multi-agent 활성화
+    'anthropic_model': os.getenv('ANTHROPIC_MODEL', 'claude-3-5-sonnet-20241022'),
+    'openai_embedding_model': os.getenv('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'),
 }
 
 # 로깅 설정

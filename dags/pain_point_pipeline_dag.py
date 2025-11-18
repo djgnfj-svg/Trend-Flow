@@ -21,7 +21,8 @@ from database.pain_point_db_manager import PainPointDBManager
 from ai_analysis.rag_engine import RAGEngine
 from ai_analysis.claude_analyzer import ClaudeAnalyzer
 from ai_analysis.market_validator import MarketValidator
-from config import CRAWLING_CONFIG
+from ai_analysis.multi_agent_system import AgentCoordinator
+from config import CRAWLING_CONFIG, AI_CONFIG
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -149,15 +150,22 @@ def collect_producthunt_task(**context):
 
 
 def analyze_pain_points_task(**context):
-    """Pain Point 분석 태스크 (Claude API + RAG)"""
+    """Pain Point 분석 태스크 (Claude API + RAG + Multi-Agent)"""
     logger.info("=" * 60)
     logger.info("Pain Point 분석 시작")
+    use_multi_agent = AI_CONFIG.get('use_multi_agent', True)
+    logger.info(f"Multi-Agent Mode: {'ENABLED' if use_multi_agent else 'DISABLED'}")
     logger.info("=" * 60)
 
     try:
         db = PainPointDBManager()
         rag = RAGEngine()
-        analyzer = ClaudeAnalyzer()
+
+        # Multi-agent 또는 단일 analyzer 선택
+        if use_multi_agent:
+            coordinator = AgentCoordinator()
+        else:
+            analyzer = ClaudeAnalyzer()
 
         # 미분석 콘텐츠 가져오기
         analyze_limit = CRAWLING_CONFIG.get('analyze_limit', 10)
@@ -185,11 +193,17 @@ def analyze_pain_points_task(**context):
                 min_similarity=0.6
             )
 
-            # 2. Claude API로 Pain Point 추출
-            pain_point = analyzer.extract_pain_point(
-                content=content,
-                similar_pain_points=similar_pain_points
-            )
+            # 2. Pain Point 추출 (Multi-agent 또는 단일 analyzer)
+            if use_multi_agent:
+                pain_point = coordinator.analyze_with_agents(
+                    content=content,
+                    similar_contexts=similar_pain_points
+                )
+            else:
+                pain_point = analyzer.extract_pain_point(
+                    content=content,
+                    similar_pain_points=similar_pain_points
+                )
 
             if not pain_point:
                 logger.info("Pain Point 없음, 스킵")
